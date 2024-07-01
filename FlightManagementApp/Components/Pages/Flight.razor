@@ -1,0 +1,461 @@
+﻿@page "/flight"
+
+<div class="flight">
+    
+    <div class="find-flight">
+        <h3>Flight Finder</h3>
+        <label>From:</label><br />
+        <select @bind = "origin">
+            <option>Any</option>
+            <option>YYC</option>
+            <option>YEG</option>
+            <option>YUL</option>
+            <option>YOW</option>
+            <option>YYZ</option>
+            <option>YVR</option>
+            <option>YWG</option>
+            <option>ATL</option>
+            <option>PEK</option>
+            <option>DXB</option>
+            <option>HKG</option>
+            <option>LHR</option>
+            <option>HND</option>
+            <option>ORD</option>
+            <option>PVG</option>
+            <option>CDG</option>
+            <option>AMS</option>
+            <option>DEL</option>
+            <option>FRA</option>
+            <option>DFW</option>
+        </select><br />
+
+        <label>To:</label><br />
+        <select @bind = "destination">
+            <option>Any</option>
+            <option>YYC</option>
+            <option>YEG</option>
+            <option>YUL</option>
+            <option>YOW</option>
+            <option>YYZ</option>
+            <option>YVR</option>
+            <option>YWG</option>
+            <option>ATL</option>
+            <option>PEK</option>
+            <option>DXB</option>
+            <option>HKG</option>
+            <option>LHR</option>
+            <option>HND</option>
+            <option>ORD</option>
+            <option>PVG</option>
+            <option>CDG</option>
+            <option>AMS</option>
+            <option>DEL</option>
+            <option>FRA</option>
+            <option>DFW</option>
+        </select><br />
+
+        <label>Day:</label><br />
+        <select @bind = "dayOfWeek">
+            <option>Any</option>
+            <option>Monday</option>
+            <option>Tuesday</option>
+            <option>Wednesday</option>
+            <option>Thursday</option>
+            <option>Friday</option>
+            <option>Saturday</option>
+            <option>Sunday</option>
+        </select><br />
+        <button class="btn-success" @onclick = "()=>findFlight(origin, destination,dayOfWeek)">Find Flight</button>
+    </div>
+    <div>
+        <h3>Flights</h3>
+        <div class="flight-result">
+            @if (flightFound != "")
+            {
+                <p>@flightFound <button @onclick = "()=>selectFlight()">Book Flight</button></p>
+            }
+            else
+            {
+                <p>No Result</p>
+            }
+            
+        </div>
+    </div>
+</div>
+
+
+<div class="reserve">
+    <h3>Reserve</h3>
+    <label for="flight-code">Flight Code:</label><br />
+    <input type="text" name="flight-code" readonly @bind = "flightCode"/><br />
+
+    <label for="airline">Airline:</label><br />
+    <input type="text" name="airline" readonly @bind="airline" /><br />
+
+    <label for="day">Day:</label><br />
+    <input type="text" name="day" readonly @bind="flightDay" /><br />
+
+    <label for="time">Time:</label><br />
+    <input type="text" name="time" readonly @bind="flightTime" /><br />
+
+    <label for="cost">Cost:</label><br />
+    <input type="text" name="cost" readonly @bind="flightCost" /><br />
+
+        <label for="name">Name:</label><br />
+    <input type="text" name="name" @bind="customerName" /><br />
+
+    <label for="citizenship">Citizenship:</label><br />
+    <input type="text" name="citizenship" @bind="customerCitzenship" /><br />
+    <p>@errorMessage</p>
+    <button class="btn-primary" @onclick = "()=>reserveFlight()">Reserve</button>
+
+    <p>Reservation Code: <span>@reservationCode</span></p>
+</div>
+
+
+
+<div class="search-reservations">
+    <h3>Search</h3>
+    <label for="reserve-code">Code:</label><br />
+    <input type="text" name="flight-code" @bind="searchByCode" /><br />
+
+    <label for="airline">Airline:</label><br />
+    <input type="text" name="airline" @bind="searchByAirline" /><br />
+
+    <label for="name">Name:</label><br />
+    <input type="text" name="name" @bind="searchByName" /><br />
+
+    <button class="btn-primary" @onclick = "()=>findReservations(searchByCode, searchByAirline, searchByName)">Find Reservations</button>
+
+    <div class="reservations">
+        <h3>Reservations</h3>
+        <div class="reservation-result">
+            @foreach(var reservation in reservationsFound)
+            {
+                <div class="reservation-result-card">
+                    <h4>@string.Join(",", reservation)</h4>
+
+                    <label for="name">Name:</label> <br />
+                    <input type="text" name="name" @bind="updateName" /><br />
+
+                    <label for="citizenship">Citizenship:</label><br />
+                    <input type="text" name="citizenship" @bind="updateCitzenship" /><br />
+
+                    <p>@updateSucess</p>
+                    <p>@cancelSucess</p>
+
+                    <button class="btn-success" @onclick="()=>updateReservation(reservation)">Update</button>
+                    <button class="btn-danger" @onclick="()=>cancelReservation(reservation)">Cancel Reservation</button>
+                </div>
+                
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    string origin = "";
+    string destination = "";
+    string dayOfWeek = "";
+    string flightFound = "";
+
+    string flightCode = "";
+    string airline = "";
+    string flightDay = "";
+    string flightTime = "";
+    string flightCost = "";
+    string customerName = "";
+    string customerCitzenship = "";
+
+    string reservationCode = "";
+    string errorMessage = "";
+
+
+    string updateName = "";
+    string updateCitzenship = "";
+    List<string> reservationCodeList = new List<string>();
+
+    List<string[]> reservationsFound = new List<string[]>();
+
+    string searchByCode = "";
+    string searchByAirline = "";
+    string searchByName = "";
+
+    string updateSucess = "";
+    string cancelSucess = "";
+
+
+    //This file path is a the path for my computer any user should change the path to their computer
+    string reservationPath = "C:\\SAIT\\winter2024\\cprg211\\assignments\\flightAssignment2\\FlightManagementApp\\FlightManagementApp\\data\\reservations.csv";
+    string flightPath = "C:\\SAIT\\winter2024\\cprg211\\assignments\\flightAssignment2\\FlightManagementApp\\FlightManagementApp\\data\\flights.csv";
+    string tempPath = "C:\\SAIT\\winter2024\\cprg211\\assignments\\flightAssignment2\\FlightManagementApp\\FlightManagementApp\\data\\temp.csv";
+
+    void findFlight(string from, string to, string day)
+    {
+        List<string[]> allFlightRecords = new List<string[]>();
+        string[] allFlightLines = File.ReadAllLines(flightPath);
+
+        foreach(var line in allFlightLines)
+        {
+            string[] record = line.Split(",");
+            allFlightRecords.Add(record);
+        }
+
+        foreach (var record in allFlightRecords)
+        {
+            if (record[2] == from && record[3] == to && record[4] == day)
+            {
+                flightFound = string.Join(",", record);
+            }
+        }
+    }
+
+    void selectFlight()
+    {
+        string[] row = flightFound.Split(",");
+
+        flightCode = row[0];
+        airline = row[1];
+        flightDay = row[4];
+        flightTime = row[5];
+        flightCost = row[7];
+
+        flightFound = "";
+        origin = "";
+        destination = "";
+        dayOfWeek = "";
+
+    }
+
+    static string reservationCodeGenerator()
+    {
+        string[] UpperCaseAlphabet = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
+        Random randomizer = new Random();
+
+        string firstChar = UpperCaseAlphabet[randomizer.Next(UpperCaseAlphabet.Length)];
+        string secondChar = Convert.ToString(randomizer.Next(10));
+        string thirdChar = Convert.ToString(randomizer.Next(10));
+        string fourthChar = Convert.ToString(randomizer.Next(10));
+        string fifthChar = Convert.ToString(randomizer.Next(10));
+
+        string reservationCode = firstChar + secondChar + thirdChar + fourthChar + fifthChar;
+
+        return reservationCode;
+    }
+
+
+    void reserveFlight()
+    {
+        try
+        {
+            if (customerName.Length > 0)
+            {
+                reservationCode = reservationCodeGenerator();
+                string[] reservationDetails = { $"{reservationCode},{flightCode},{airline},{flightDay},{flightTime},{flightCost},{customerName},{customerCitzenship},active" };
+                File.AppendAllLines(reservationPath, reservationDetails);
+
+                flightCode = "";
+                airline = "";
+                flightDay = "";
+                flightTime = "";
+                flightCost = "";
+                customerName = "";
+                customerCitzenship = "";
+
+                errorMessage = "";
+            }
+            else
+            {
+                errorMessage = "Name or Citizenship fields cannot be blank";
+            }
+
+        }
+        catch(Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+
+    void findReservations(string searchCode, string searchAirline, string searchName)
+    {
+        reservationsFound.Clear();
+        List<string[]> allReservationsRecords = new List<string[]>();
+        string[] allReservationsLines = File.ReadAllLines(reservationPath);
+
+
+        foreach (var line in allReservationsLines)
+        {
+            string[] record = line.Split(",");
+            allReservationsRecords.Add(record);
+        }
+        if (searchCode == "" && searchAirline == "" && searchName == "")
+        {
+            reservationsFound = allReservationsRecords;
+        }
+        else if(searchCode != "" && searchAirline == "" && searchName == "")
+        {
+            foreach (var record in allReservationsRecords)
+            {
+                if (record[0] == searchCode)
+                {
+                    reservationsFound.Add(record);
+                }
+            }
+        }
+        else if (searchCode == "" && searchAirline != "" && searchName == "")
+        {
+            foreach (var record in allReservationsRecords)
+            {
+                if (record[2] == searchAirline)
+                {
+                    reservationsFound.Add(record);
+                }
+            }
+        }
+        else if (searchCode == "" && searchAirline == "" && searchName != "")
+        {
+            foreach (var record in allReservationsRecords)
+            {
+                if (record[6] == searchName)
+                {
+                    reservationsFound.Add(record);
+                }
+            }
+        }
+        else if (searchCode != "" && searchAirline != "" && searchName == "")
+        {
+            foreach (var record in allReservationsRecords)
+            {
+                if (record[0] == searchCode && record[2] == searchAirline)
+                {
+                    reservationsFound.Add(record);
+                }
+            }
+        }
+        else if (searchCode != "" && searchAirline == "" && searchName != "")
+        {
+            foreach (var record in allReservationsRecords)
+            {
+                if (record[0] == searchCode && record[6] == searchName)
+                {
+                    reservationsFound.Add(record);
+                }
+            }
+        }
+        else if (searchCode == "" && searchAirline != "" && searchName != "")
+        {
+            foreach (var record in allReservationsRecords)
+            {
+                if (record[2] == searchAirline && record[6] == searchName)
+                {
+                    reservationsFound.Add(record);
+                }
+            }
+        }
+        else if (searchCode != "" && searchAirline != "" && searchName != "")
+        {
+            foreach (var record in allReservationsRecords)
+            {
+                if (record[0] == searchCode && record[2] == searchAirline && record[6] == searchName)
+                {
+                    reservationsFound.Add(record);
+                }
+            }
+        }
+
+    }
+
+    void updateReservation( string[] record)
+    {            
+        if (updateName.Length > 0 && updateCitzenship.Length > 0)
+        {
+            try
+            {
+
+                string[] allReservationsLines = File.ReadAllLines(reservationPath);
+
+
+
+                foreach (var line in allReservationsLines)
+                {
+                    string[] row = line.Split(",");
+                    if (row[0] == record[0])
+                    {
+                        row[6] = updateName;
+                        row[7] = updateCitzenship;
+                        string[] reservationDetails = { $"{row[0]},{row[1]},{row[2]},{row[3]},{row[4]},{row[5]},{row[6]},{row[7]},active" };
+                        File.AppendAllLines(tempPath, reservationDetails);
+                    }
+                    else
+                    {
+                        string[] reservationDetails = { $"{row[0]},{row[1]},{row[2]},{row[3]},{row[4]},{row[5]},{row[6]},{row[7]}" };
+                        File.AppendAllLines(tempPath, reservationDetails);
+                    }
+
+                }
+                updateName = "";
+                updateCitzenship = "";
+                File.Replace(
+                    tempPath,
+                    reservationPath,
+                    null
+                );
+
+                cancelSucess = "";
+                updateSucess = "Updated Sucessfully";
+            }
+            catch (Exception ex)
+            {
+                updateSucess = ex.Message;
+            }
+        }
+        else
+        {
+            cancelSucess = "";
+            updateSucess = "Update Not Sucessfully Name and Citizenship Field Cannot be blank";
+        }
+
+
+    }
+
+
+    void cancelReservation(string[] record)
+    {
+        try
+        {
+            string[] allReservationsLines = File.ReadAllLines("C:\\SAIT\\winter2024\\cprg211\\assignments\\flightAssignment2\\FlightManagementApp\\FlightManagementApp\\data\\reservations.csv");
+
+            foreach (var line in allReservationsLines)
+            {
+                string[] row = line.Split(",");
+                if (row[0] == record[0])
+                {
+                    string[] reservationDetails = { $"{row[0]},{row[1]},{row[2]},{row[3]},{row[4]},{row[5]},{row[6]},{row[7]}, inactive" };
+                    File.AppendAllLines("C:\\SAIT\\winter2024\\cprg211\\assignments\\flightAssignment2\\FlightManagementApp\\FlightManagementApp\\data\\temp.csv", reservationDetails);
+                }
+                else
+                {
+                    string[] reservationDetails = { $"{row[0]},{row[1]},{row[2]},{row[3]},{row[4]},{row[5]},{row[6]},{row[7]}" };
+                    File.AppendAllLines("C:\\SAIT\\winter2024\\cprg211\\assignments\\flightAssignment2\\FlightManagementApp\\FlightManagementApp\\data\\temp.csv", reservationDetails);
+                }
+
+            }
+            updateName = "";
+            updateCitzenship = "";
+            File.Replace(
+                "C:\\SAIT\\winter2024\\cprg211\\assignments\\flightAssignment2\\FlightManagementApp\\FlightManagementApp\\data\\temp.csv",
+                "C:\\SAIT\\winter2024\\cprg211\\assignments\\flightAssignment2\\FlightManagementApp\\FlightManagementApp\\data\\reservations.csv",
+                null
+            );
+            cancelSucess = "Cancelled Sucessfully";
+            updateSucess = "";
+        }
+        catch(Exception ex)
+        {
+            cancelSucess = ex.Message;
+        }
+
+
+    }
+}
